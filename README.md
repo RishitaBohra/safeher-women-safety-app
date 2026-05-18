@@ -46,23 +46,18 @@ lib/
 
 ## App Screenshots
 
-### Login Screen
-![Login Screen](screenshots/login.png)
 
-### Home Screen
-![Home Screen](screenshots/home.png)
+<p align="center">
+  <img src="screenshots/login.png" width="250"/>
+  <img src="screenshots/home.png" width="250"/>
+  <img src="screenshots/sos_screen.png" width="250"/>
+</p>
 
-### SOS Active Screen
-![SOS Screen](screenshots/sos_screen.png)
-
-### Live Location Screen
-![Location Screen](screenshots/location.png)
-
-### Emergency Activation Screen
-![Activation Screen](screenshots/activation.png)
-
-### Profile Screen
-![Profile Screen](screenshots/profile.png)
+<p align="center">
+  <img src="screenshots/location.png" width="250"/>
+  <img src="screenshots/activation.png" width="250"/>
+  <img src="screenshots/profile.png" width="250"/>
+</p>
 
 ## Screens Included
 
