@@ -44,6 +44,26 @@ lib/
 └── main.dart
 ```
 
+## App Screenshots
+
+### Login Screen
+![Login Screen](screenshots/login.png)
+
+### Home Screen
+![Home Screen](screenshots/home.png)
+
+### SOS Active Screen
+![SOS Screen](screenshots/sos_screen.png)
+
+### Live Location Screen
+![Location Screen](screenshots/location.png)
+
+### Emergency Activation Screen
+![Activation Screen](screenshots/activation.png)
+
+### Profile Screen
+![Profile Screen](screenshots/profile.png)
+
 ## Screens Included
 
 * Splash Screen
