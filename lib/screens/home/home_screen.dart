@@ -6,6 +6,7 @@ import '../sos/sos_active_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
+import '../sos/sos_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,121 +40,101 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void showSOSDialog() {
+    showDialog(
+      context: context,
 
-  showDialog(
-    context: context,
-
-    builder: (dialogContext) {
-
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(28),
-        ),
-
-        title: const Text(
-          "Emergency SOS",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-
-        content: const Text(
-          "Your emergency alert and live location will instantly be shared with your trusted contacts.",
-          style: TextStyle(
-            height: 1.5,
-          ),
-        ),
-
-        actions: [
-
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-            },
-
-            child: const Text(
-              "Cancel",
-            ),
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
           ),
 
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  const Color(0xFFFF3B5F),
+          title: const Text(
+            "Emergency SOS",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
 
-              foregroundColor:
-                  Colors.white,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Your emergency alert and live location will instantly be shared with your trusted contacts.",
+                style: TextStyle(height: 1.5),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Stay Safe • Stay Connected",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+
+              child: const Text("Cancel"),
             ),
 
-            onPressed: () async {
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF3B5F),
 
-              Navigator.pop(dialogContext);
+                foregroundColor: Colors.white,
+              ),
 
-              try {
+              onPressed: () async {
+                Navigator.pop(dialogContext);
 
-                Position position =
-                    await Geolocator
-                        .getCurrentPosition(
-                  desiredAccuracy:
-                      LocationAccuracy.high,
-                );
+                try {
+                  Position position = await Geolocator.getCurrentPosition(
+                    desiredAccuracy: LocationAccuracy.high,
+                  );
 
-                final user =
-                    FirebaseAuth
-                        .instance
-                        .currentUser;
+                  final user = FirebaseAuth.instance.currentUser;
 
-                await FirebaseFirestore
-                    .instance
-                    .collection(
-                        "sos_alerts")
-                    .add({
+                  await FirebaseFirestore.instance
+                      .collection("sos_alerts")
+                      .add({
+                        "uid": user?.uid,
 
-                  "uid": user?.uid,
+                        "email": user?.email,
 
-                  "email":
-                      user?.email,
+                        "latitude": position.latitude,
 
-                  "latitude":
-                      position.latitude,
+                        "longitude": position.longitude,
 
-                  "longitude":
-                      position.longitude,
+                        "timestamp": FieldValue.serverTimestamp(),
 
-                  "timestamp":
-                      FieldValue
-                          .serverTimestamp(),
+                        "status": "active",
+                      });
 
-                  "status": "active",
-                });
+                  if (!mounted) return;
 
-                if (!mounted) return;
+                  Navigator.push(
+                    context,
 
-                Navigator.push(
-                  context,
+                    MaterialPageRoute(builder: (_) => const SosActiveScreen()),
+                  );
+                } catch (e) {
+                  print(e.toString());
+                }
+              },
 
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const SosActiveScreen(),
-                  ),
-                );
-
-              } catch (e) {
-
-                print(e.toString());
-              }
-            },
-
-            child: const Text(
-              "Activate",
+              child: const Text("Activate"),
             ),
-          ),
-        ],
-      );
-    },
-  );
-}
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -501,6 +482,22 @@ class _HomeScreenState extends State<HomeScreen>
                       color: Colors.green,
 
                       onTap: () {},
+                    ),
+
+                    actionCard(
+                      icon: Icons.history,
+                      title: "SOS\nHistory",
+                      color: Colors.purple,
+
+                      onTap: () {
+                        Navigator.push(
+                          context,
+
+                          MaterialPageRoute(
+                            builder: (_) => const SOSHistoryScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
