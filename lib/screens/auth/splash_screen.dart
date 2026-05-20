@@ -184,15 +184,19 @@ class _SplashScreenState
                           ],
                         ),
 
-                        child: const Center(
-                          child: Icon(
-                            Icons
-                                .shield_rounded,
-                            color:
-                                Colors.white,
-                            size: 80,
-                          ),
-                        ),
+                        child: Center(
+  child: ClipRRect(
+    borderRadius:
+        BorderRadius.circular(20),
+
+    child: Image.asset(
+      "assets/images/homepageillustration.png",
+      height: 90,
+      width: 90,
+      fit: BoxFit.cover,
+    ),
+  ),
+),
                       ),
 
                       const SizedBox(

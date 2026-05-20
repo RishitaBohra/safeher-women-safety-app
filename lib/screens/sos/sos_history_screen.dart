@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:intl/intl.dart';
 class SOSHistoryScreen extends StatelessWidget {
   const SOSHistoryScreen({super.key});
 
@@ -78,6 +78,21 @@ class SOSHistoryScreen extends StatelessWidget {
 
               final data =
                   alerts[index];
+                  final timestamp =
+    data['timestamp'];
+
+String formattedDate =
+    "No Date";
+
+if (timestamp != null) {
+
+  formattedDate =
+      DateFormat(
+        "dd MMM yyyy, hh:mm a",
+      ).format(
+        timestamp.toDate(),
+      );
+}
 
               return Card(
                 margin:
@@ -105,6 +120,7 @@ class SOSHistoryScreen extends StatelessWidget {
 
                   subtitle: Text(
   "Status: ${data['status']}\n"
+  "Date: $formattedDate\n"
   "Lat: ${data.data().containsKey('latitude') ? data['latitude'] : 'N/A'}\n"
   "Lng: ${data.data().containsKey('longitude') ? data['longitude'] : 'N/A'}",
 ),
