@@ -4,7 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+    const ProfileScreen({super.key});
+  
+
 
   @override
   State<ProfileScreen> createState() =>
@@ -13,6 +15,11 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState
     extends State<ProfileScreen> {
+      final TextEditingController nameController =
+    TextEditingController();
+
+final TextEditingController phoneController =
+    TextEditingController();
 
   bool notificationsEnabled = true;
   bool locationEnabled = true;
@@ -48,12 +55,15 @@ class _ProfileScreenState
 
           setState(() {
 
-            name = doc['name'] ?? '';
-            email = doc['email'] ?? '';
+  name = doc['name'] ?? '';
+  email = doc['email'] ?? '';
 
-            isLoading = false;
-          });
+  nameController.text = name;
+  phoneController.text =
+      doc['phone'] ?? '';
 
+  isLoading = false;
+});
         } else {
 
           setState(() {
@@ -236,55 +246,150 @@ class _ProfileScreenState
 
                       // EDIT BUTTON
 
-                      Container(
-                        padding:
-                            const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
+                      GestureDetector(
+  onTap: () {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Edit Profile"),
 
-                        decoration: BoxDecoration(
-                          color:
-                              const Color(
-                            0xFFFFF3F5,
-                          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
 
-                          borderRadius:
-                              BorderRadius.circular(
-                            20,
-                          ),
-                        ),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: "Name",
+                ),
+              ),
 
-                        child: const Row(
-                          mainAxisSize:
-                              MainAxisSize.min,
+              const SizedBox(height: 15),
 
-                          children: [
+              TextField(
+                controller: phoneController,
+                keyboardType:
+                    TextInputType.phone,
+                decoration:
+                    const InputDecoration(
+                  labelText: "Phone",
+                ),
+              ),
+            ],
+          ),
 
-                            Icon(
-                              Icons.edit,
-                              color: Color(
-                                0xFFFF6A88,
-                              ),
-                              size: 18,
-                            ),
+          actions: [
 
-                            SizedBox(width: 8),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Cancel",
+              ),
+            ),
 
-                            Text(
-                              "Edit Profile",
-                              style: TextStyle(
-                                color: Color(
-                                  0xFFFF6A88,
-                                ),
-                                fontWeight:
-                                    FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+            ElevatedButton(
+              onPressed: () async {
 
+                final user =
+                    FirebaseAuth
+                        .instance
+                        .currentUser;
+
+                await FirebaseFirestore
+                    .instance
+                    .collection('users')
+                    .doc(user!.uid)
+                    .set({
+
+                  'name':
+                      nameController.text,
+
+                  'email':
+                      email,
+
+                  'phone':
+                      phoneController.text,
+
+                }, SetOptions(
+                  merge: true,
+                ));
+
+                setState(() {
+                  name =
+                      nameController.text;
+                });
+
+                if (!mounted) return;
+
+                Navigator.pop(
+                    context);
+              },
+
+              child:
+                  const Text(
+                "Save",
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  },
+
+  child: Container(
+    padding:
+        const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 10,
+    ),
+
+    decoration:
+        BoxDecoration(
+      color:
+          const Color(
+        0xFFFFF3F5,
+      ),
+
+      borderRadius:
+          BorderRadius.circular(
+        20,
+      ),
+    ),
+
+    child: const Row(
+      mainAxisSize:
+          MainAxisSize.min,
+
+      children: [
+        Icon(
+          Icons.edit,
+          color:
+              Color(
+            0xFFFF6A88,
+          ),
+          size: 18,
+        ),
+
+        SizedBox(width: 8),
+
+        Text(
+          "Edit Profile",
+          style: TextStyle(
+            color:
+                Color(
+              0xFFFF6A88,
+            ),
+            fontWeight:
+                FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  ),
+),
                       const SizedBox(height: 28),
 
                       // STATS
