@@ -359,12 +359,34 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                           onPressed: () async {
                             final phone = contact['phone'];
 
-                            final Uri callUri = Uri(scheme: 'tel', path: phone);
+                            final Uri callUri = Uri(
+                              scheme: 'tel',
+                              path: "+91$phone",
+                            );
 
                             await launchUrl(callUri);
                           },
 
                           icon: const Icon(Icons.call, color: Colors.green),
+                        ),
+
+                        IconButton(
+                          onPressed: () async {
+                            final phone = contact['phone'];
+
+                            final Uri smsUri = Uri(
+                              scheme: 'sms',
+                              path: "+91$phone",
+                              queryParameters: {
+                                'body':
+                                    "🚨 SOS Alert! I may need help. Please check on me immediately.",
+                              },
+                            );
+
+                            await launchUrl(smsUri);
+                          },
+
+                          icon: const Icon(Icons.message, color: Colors.blue),
                         ),
 
                         IconButton(

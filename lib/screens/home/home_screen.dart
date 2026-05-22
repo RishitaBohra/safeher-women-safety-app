@@ -114,7 +114,16 @@ class _HomeScreenState extends State<HomeScreen>
 
                         "status": "active",
                       });
+                  final locationLink =
+    "https://maps.google.com/?q=${position.latitude},${position.longitude}";
 
+ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(
+    content: Text(
+      "Live Location Ready",
+    ),
+  ),
+);
                   if (!mounted) return;
 
                   Navigator.push(
