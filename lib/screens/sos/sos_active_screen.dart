@@ -3,101 +3,128 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 class SosActiveScreen extends StatefulWidget {
   const SosActiveScreen({super.key});
 
   @override
-  State<SosActiveScreen> createState() =>
-      _SosActiveScreenState();
+  State<SosActiveScreen> createState() => _SosActiveScreenState();
 }
 
-class _SosActiveScreenState
-    extends State<SosActiveScreen>
+class _SosActiveScreenState extends State<SosActiveScreen>
     with TickerProviderStateMixin {
-
-  late AnimationController
-      pulseController;
+  late AnimationController pulseController;
 
   bool sosActivated = false;
 
   int countdown = 5;
 
   Timer? timer;
-
-  final currentUser =
-      FirebaseAuth.instance.currentUser;
+StreamSubscription<Position>?
+    locationStream;
+  final currentUser = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
-
     super.initState();
 
-    pulseController =
-        AnimationController(
+    pulseController = AnimationController(
       vsync: this,
 
-      duration:
-          const Duration(seconds: 1),
+      duration: const Duration(seconds: 1),
     )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-
     pulseController.dispose();
 
     timer?.cancel();
+    locationStream?.cancel();
 
     super.dispose();
   }
 
   Future<void> activateSOS() async {
-
     setState(() {
       sosActivated = true;
       countdown = 5;
     });
 
-    timer = Timer.periodic(
-      const Duration(seconds: 1),
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (countdown == 0) {
+        timer.cancel();
 
-      (timer) async {
+        await sendSOSAlert();
 
-        if (countdown == 0) {
+        return;
+      }
 
-          timer.cancel();
-
-          await sendSOSAlert();
-
-          return;
-        }
-
-        setState(() {
-          countdown--;
-        });
-      },
-    );
+      setState(() {
+        countdown--;
+      });
+    });
   }
 
   Future<void> sendSOSAlert() async {
+    await FirebaseFirestore.instance.collection('sos_alerts').add({
+      'uid': currentUser!.uid,
 
-    await FirebaseFirestore.instance
-        .collection('sos_alerts')
-        .add({
+      'email': currentUser!.email,
 
-      'uid':
-          currentUser!.uid,
+      'status': 'active',
 
-      'email':
-          currentUser!.email,
-
-      'status':
-          'active',
-
-      'timestamp':
-          Timestamp.now(),
+      'timestamp': Timestamp.now(),
     });
+    locationStream =
+    Geolocator.getPositionStream(
+      locationSettings:
+          const LocationSettings(
+        accuracy:
+            LocationAccuracy.high,
+
+        distanceFilter: 5,
+      ),
+    ).listen(
+
+  (Position position) async {
+
+    final snapshot =
+        await FirebaseFirestore
+            .instance
+            .collection(
+                'sos_alerts')
+            .where(
+              'uid',
+              isEqualTo:
+                  currentUser!.uid,
+            )
+            .where(
+              'status',
+              isEqualTo:
+                  'active',
+            )
+            .limit(1)
+            .get();
+
+    if (snapshot.docs.isNotEmpty) {
+
+      await snapshot
+          .docs
+          .first
+          .reference
+          .update({
+
+        'latitude':
+            position.latitude,
+
+        'longitude':
+            position.longitude,
+      });
+    }
+  },
+);
 
     if (!mounted) return;
 
@@ -105,37 +132,26 @@ class _SosActiveScreenState
       context: context,
 
       builder: (_) {
-
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(
-              24,
-            ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
 
-          title: const Text(
-            "SOS Alert Sent",
-          ),
+          title: const Text("SOS Alert Sent"),
 
           content: const Text(
             "Your emergency alert has been activated successfully.",
           ),
 
           actions: [
-
             TextButton(
               onPressed: () {
-
                 Navigator.pop(context);
 
                 Navigator.pop(context);
               },
 
-              child: const Text(
-                "OK",
-              ),
+              child: const Text("OK"),
             ),
           ],
         );
@@ -143,34 +159,50 @@ class _SosActiveScreenState
     );
   }
 
-  void cancelSOS() {
-
+  Future<void> cancelSOS() async {
     timer?.cancel();
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('sos_alerts')
+        .where('uid', isEqualTo: currentUser!.uid)
+        .where('status', isEqualTo: 'active')
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      await snapshot.docs.first.reference.update({'status': 'resolved'});
+    }
 
     setState(() {
       sosActivated = false;
       countdown = 5;
     });
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          snapshot.docs.isEmpty
+              ? "SOS cancelled before alert was sent"
+              : "SOS stopped successfully",
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      backgroundColor:
-          const Color(0xFFF7F8FC),
+      backgroundColor: const Color(0xFFF7F8FC),
 
       appBar: AppBar(
-        backgroundColor:
-            Colors.transparent,
+        backgroundColor: Colors.transparent,
 
         elevation: 0,
 
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black,
-          ),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
 
           onPressed: () {
             Navigator.pop(context);
@@ -180,23 +212,17 @@ class _SosActiveScreenState
         title: const Text(
           "Emergency SOS",
 
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight:
-                FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
 
         centerTitle: true,
       ),
 
       body: Padding(
-        padding:
-            const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
 
         child: Column(
           children: [
-
             const SizedBox(height: 20),
 
             const Text(
@@ -204,10 +230,7 @@ class _SosActiveScreenState
 
               textAlign: TextAlign.center,
 
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
 
             const SizedBox(height: 50),
@@ -215,67 +238,39 @@ class _SosActiveScreenState
             Expanded(
               child: Center(
                 child: AnimatedBuilder(
-                  animation:
-                      pulseController,
+                  animation: pulseController,
 
-                  builder:
-                      (context, child) {
-
-                    double scale =
-                        sosActivated
-                            ? 1 +
-                                pulseController
-                                        .value *
-                                    0.1
-                            : 1;
+                  builder: (context, child) {
+                    double scale = sosActivated
+                        ? 1 + pulseController.value * 0.1
+                        : 1;
 
                     return Transform.scale(
                       scale: scale,
 
                       child: GestureDetector(
-                        onLongPress:
-                            activateSOS,
+                        onLongPress: activateSOS,
 
                         child: Container(
                           height: 220,
                           width: 220,
 
-                          decoration:
-                              BoxDecoration(
-                            shape:
-                                BoxShape.circle,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
 
-                            gradient:
-                                LinearGradient(
-                              colors:
-                                  sosActivated
-                                      ? [
-                                          Colors
-                                              .red
-                                              .shade300,
+                            gradient: LinearGradient(
+                              colors: sosActivated
+                                  ? [Colors.red.shade300, Colors.red]
+                                  : [
+                                      const Color(0xFFFF9A9E),
 
-                                          Colors
-                                              .red,
-                                        ]
-                                      : [
-                                          const Color(
-                                            0xFFFF9A9E,
-                                          ),
-
-                                          const Color(
-                                            0xFFFF6A88,
-                                          ),
-                                        ],
+                                      const Color(0xFFFF6A88),
+                                    ],
                             ),
 
                             boxShadow: [
-
                               BoxShadow(
-                                color:
-                                    Colors.red
-                                        .withOpacity(
-                                  0.35,
-                                ),
+                                color: Colors.red.withOpacity(0.35),
 
                                 blurRadius: 30,
 
@@ -285,58 +280,39 @@ class _SosActiveScreenState
                           ),
 
                           child: Column(
-                            mainAxisAlignment:
-                                MainAxisAlignment
-                                    .center,
+                            mainAxisAlignment: MainAxisAlignment.center,
 
                             children: [
-
                               const Icon(
                                 Icons.warning,
-                                color:
-                                    Colors.white,
+                                color: Colors.white,
 
                                 size: 60,
                               ),
 
-                              const SizedBox(
-                                height: 10,
-                              ),
+                              const SizedBox(height: 10),
 
                               Text(
-                                sosActivated
-                                    ? countdown
-                                        .toString()
-                                    : "SOS",
+                                sosActivated ? countdown.toString() : "SOS",
 
-                                style:
-                                    const TextStyle(
-                                  color:
-                                      Colors
-                                          .white,
+                                style: const TextStyle(
+                                  color: Colors.white,
 
                                   fontSize: 42,
 
-                                  fontWeight:
-                                      FontWeight
-                                          .bold,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
 
-                              const SizedBox(
-                                height: 8,
-                              ),
+                              const SizedBox(height: 8),
 
                               Text(
                                 sosActivated
                                     ? "Sending Alert..."
                                     : "Hold to Activate",
 
-                                style:
-                                    const TextStyle(
-                                  color:
-                                      Colors
-                                          .white70,
+                                style: const TextStyle(
+                                  color: Colors.white70,
 
                                   fontSize: 16,
                                 ),
@@ -357,39 +333,24 @@ class _SosActiveScreenState
                 height: 55,
 
                 child: ElevatedButton(
-                  style:
-                      ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.white,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
 
-                    foregroundColor:
-                        Colors.red,
+                    foregroundColor: Colors.red,
 
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        18,
-                      ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
 
-                      side: const BorderSide(
-                        color: Colors.red,
-                      ),
+                      side: const BorderSide(color: Colors.red),
                     ),
                   ),
 
-                  onPressed:
-                      cancelSOS,
+                  onPressed: cancelSOS,
 
                   child: const Text(
                     "Cancel SOS",
 
-                    style: TextStyle(
-                      fontWeight:
-                          FontWeight.bold,
-
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ),

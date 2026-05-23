@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import '../sos/sos_history_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -115,15 +116,67 @@ class _HomeScreenState extends State<HomeScreen>
                         "status": "active",
                       });
                   final locationLink =
-    "https://maps.google.com/?q=${position.latitude},${position.longitude}";
+                      "https://maps.google.com/?q=${position.latitude},${position.longitude}";
 
-ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-    content: Text(
-      "Live Location Ready",
-    ),
-  ),
-);
+                  final contactsSnapshot = await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user!.uid)
+                      .collection('contacts')
+                      .get();
+
+                  final phoneNumbers = contactsSnapshot.docs
+                      .map((doc) => doc['phone'].toString())
+                      .toList();
+
+                  showDialog(
+                    context: context,
+
+                    builder: (_) {
+                      return AlertDialog(
+                        title: const Text("SOS Activated"),
+
+                        content: const Text("Emergency alert is ready."),
+
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+
+                            child: const Text("Cancel"),
+                          ),
+
+                          ElevatedButton(
+                            onPressed: () async {
+                              final Uri smsUri = Uri(
+                                scheme: 'sms',
+
+                                path: phoneNumbers.join(','),
+
+                                queryParameters: {
+                                  'body':
+                                      "🚨 SOS Alert!\n"
+                                      "I need help.\n"
+                                      "My location:\n"
+                                      "$locationLink",
+                                },
+                              );
+
+                              Navigator.pop(context);
+
+                              await launchUrl(smsUri);
+                            },
+
+                            child: const Text("Send Alert"),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Live Location Ready")),
+                  );
                   if (!mounted) return;
 
                   Navigator.push(
@@ -475,22 +528,37 @@ ScaffoldMessenger.of(context).showSnackBar(
 
                     actionCard(
                       icon: Icons.local_police,
-
                       title: "Police\nSupport",
-
                       color: Colors.blue,
 
-                      onTap: () {},
+                      onTap: () async {
+                        final Uri phoneUri = Uri(scheme: 'tel', path: '112');
+
+                        await launchUrl(phoneUri);
+                      },
                     ),
 
                     actionCard(
                       icon: Icons.local_hospital,
-
                       title: "Medical\nEmergency",
-
                       color: Colors.green,
 
-                      onTap: () {},
+                      onTap: () async {
+                        final Uri phoneUri = Uri(scheme: 'tel', path: '108');
+
+                        await launchUrl(phoneUri);
+                      },
+                    ),
+                    actionCard(
+                      icon: Icons.support_agent,
+                      title: "Women\nHelpline",
+                      color: Colors.pink,
+
+                      onTap: () async {
+                        final Uri phoneUri = Uri(scheme: 'tel', path: '1091');
+
+                        await launchUrl(phoneUri);
+                      },
                     ),
 
                     actionCard(
