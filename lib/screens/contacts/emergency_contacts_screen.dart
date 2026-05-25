@@ -60,6 +60,27 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
         .delete();
   }
 
+  Future<void> updateContact(String docId) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('contacts')
+        .doc(docId)
+        .update({
+          'name': nameController.text.trim(),
+
+          'phone': phoneController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+
+          'relation': relationController.text.trim(),
+        });
+
+    nameController.clear();
+    phoneController.clear();
+    relationController.clear();
+
+    Navigator.pop(context);
+  }
+
   void showAddContactDialog() {
     showModalBottomSheet(
       context: context,
@@ -160,6 +181,110 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void showEditContactDialog(DocumentSnapshot contact) {
+    nameController.text = contact['name'];
+
+    phoneController.text = contact['phone'];
+
+    relationController.text = contact['relation'];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+
+          child: Container(
+            padding: const EdgeInsets.all(20),
+
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            ),
+
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+
+              children: [
+                const Text(
+                  "Edit Contact",
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 24),
+
+                buildField(
+                  controller: nameController,
+                  hint: "Contact Name",
+                  icon: Icons.person,
+                ),
+
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+
+                  decoration: InputDecoration(
+                    hintText: "Phone Number",
+
+                    prefixIcon: const Icon(Icons.phone),
+
+                    filled: true,
+
+                    fillColor: const Color(0xFFF7F8FC),
+
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                buildField(
+                  controller: relationController,
+
+                  hint: "Relation",
+
+                  icon: Icons.favorite,
+                ),
+
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: double.infinity,
+
+                  height: 50,
+
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6A88),
+
+                      foregroundColor: Colors.white,
+                    ),
+
+                    onPressed: () {
+                      updateContact(contact.id);
+                    },
+
+                    child: const Text("Update Contact"),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -326,7 +451,6 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                         children: [
                           Text(
                             contact['name'],
-
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -337,7 +461,6 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 
                           Text(
                             contact['relation'],
-
                             style: TextStyle(color: Colors.grey.shade700),
                           ),
 
@@ -345,58 +468,144 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 
                           Text(
                             contact['phone'],
-
                             style: TextStyle(color: Colors.grey.shade600),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          Row(
+                            children: [
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+
+                                onPressed: () async {
+                                  final phone = contact['phone'];
+
+                                  final Uri callUri = Uri(
+                                    scheme: 'tel',
+                                    path: "+91$phone",
+                                  );
+
+                                  await launchUrl(callUri);
+                                },
+
+                                icon: const Icon(
+                                  Icons.call,
+                                  color: Colors.green,
+                                ),
+                              ),
+
+                              const SizedBox(width: 18),
+
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+
+                                onPressed: () async {
+                                  final phone = contact['phone'];
+
+                                  final Uri smsUri = Uri(
+                                    scheme: 'sms',
+                                    path: "+91$phone",
+                                    queryParameters: {
+                                      'body': "🚨 SOS Alert! I may need help.",
+                                    },
+                                  );
+
+                                  await launchUrl(smsUri);
+                                },
+
+                                icon: const Icon(
+                                  Icons.message,
+                                  color: Colors.blue,
+                                ),
+                              ),
+
+                              const SizedBox(width: 18),
+
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+
+                                onPressed: () {
+                                  showEditContactDialog(contact);
+                                },
+
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.orange,
+                                ),
+                              ),
+
+                              const SizedBox(width: 18),
+
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+
+                                    builder: (_) {
+                                      return AlertDialog(
+                                        title: const Text("Delete Contact"),
+
+                                        content: const Text(
+                                          "Are you sure you want to remove this emergency contact?",
+                                        ),
+
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+
+                                            child: const Text("Cancel"),
+                                          ),
+
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                              foregroundColor: Colors.white,
+                                            ),
+
+                                            onPressed: () async {
+                                              Navigator.pop(context);
+
+                                              await deleteContact(contact.id);
+
+                                              if (!mounted) return;
+
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    "Contact deleted",
+                                                  ),
+                                                ),
+                                              );
+                                            },
+
+                                            child: const Text("Delete"),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
-
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: () async {
-                            final phone = contact['phone'];
-
-                            final Uri callUri = Uri(
-                              scheme: 'tel',
-                              path: "+91$phone",
-                            );
-
-                            await launchUrl(callUri);
-                          },
-
-                          icon: const Icon(Icons.call, color: Colors.green),
-                        ),
-
-                        IconButton(
-                          onPressed: () async {
-                            final phone = contact['phone'];
-
-                            final Uri smsUri = Uri(
-                              scheme: 'sms',
-                              path: "+91$phone",
-                              queryParameters: {
-                                'body':
-                                    "🚨 SOS Alert! I may need help. Please check on me immediately.",
-                              },
-                            );
-
-                            await launchUrl(smsUri);
-                          },
-
-                          icon: const Icon(Icons.message, color: Colors.blue),
-                        ),
-
-                        IconButton(
-                          onPressed: () {
-                            deleteContact(contact.id);
-                          },
-
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                        ),
-                      ],
                     ),
                   ],
                 ),

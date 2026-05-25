@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import '../sos/sos_history_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geocoding/geocoding.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   bool isLoading = false;
+  String currentCity = "Loading...";
   int currentIndex = 0;
 
   @override
@@ -32,7 +34,94 @@ class _HomeScreenState extends State<HomeScreen>
       lowerBound: 0.95,
       upperBound: 1.05,
     )..repeat(reverse: true);
+    getCurrentLocationName();
   }
+
+  Future<void> getCurrentLocationName() async {
+  try {
+
+    bool serviceEnabled =
+        await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      setState(() {
+        currentCity = "Enable GPS";
+      });
+      return;
+    }
+
+    LocationPermission permission =
+        await Geolocator.checkPermission();
+
+    if (permission ==
+        LocationPermission.denied) {
+
+      permission =
+          await Geolocator.requestPermission();
+    }
+
+    if (permission ==
+            LocationPermission.denied ||
+        permission ==
+            LocationPermission.deniedForever) {
+
+      setState(() {
+        currentCity = "Permission denied";
+      });
+
+
+  return;
+}
+
+    Position position =
+        await Geolocator.getCurrentPosition(
+      desiredAccuracy:
+          LocationAccuracy.high,
+    );
+    print(
+ "Lat:${position.latitude} Long:${position.longitude}"
+);
+
+    try {
+
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty &&
+          placemarks.first.locality != null) {
+
+        setState(() {
+
+          currentCity =
+              "${placemarks.first.locality}, ${placemarks.first.administrativeArea}";
+        });
+
+      } else {
+
+        setState(() {
+          currentCity =
+              "${position.latitude.toStringAsFixed(2)}, ${position.longitude.toStringAsFixed(2)}";
+        });
+      }
+
+    } catch (_) {
+
+      setState(() {
+        currentCity =
+            "${position.latitude.toStringAsFixed(2)}, ${position.longitude.toStringAsFixed(2)}";
+      });
+    }
+
+  } catch (e) {
+
+    setState(() {
+      currentCity = "Location unavailable";
+    });
+  }
+}
 
   @override
   void dispose() {
@@ -91,7 +180,42 @@ class _HomeScreenState extends State<HomeScreen>
                     isLoading = true;
                   });
                 }
+  final contacts =
+      await FirebaseFirestore
+          .instance
+          .collection('users')
+          .doc(
+            FirebaseAuth
+                .instance
+                .currentUser!
+                .uid,
+          )
+          .collection(
+            'contacts',
+          )
+          .get();
 
+  if (contacts.docs.isEmpty) {
+
+    if (!mounted) return;
+
+    setState(() {
+      isLoading = false;
+    });
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
+
+      const SnackBar(
+        content: Text(
+          "Please add at least one emergency contact",
+        ),
+      ),
+    );
+
+    return;
+  }
                 try {
                   LocationPermission permission =
                       await Geolocator.checkPermission();
@@ -152,16 +276,22 @@ class _HomeScreenState extends State<HomeScreen>
 
                   final user = FirebaseAuth.instance.currentUser;
 
-                  await FirebaseFirestore.instance
-                      .collection("sos_alerts")
-                      .add({
-                        "uid": user?.uid,
-                        "email": user?.email,
-                        "latitude": position.latitude,
-                        "longitude": position.longitude,
-                        "timestamp": FieldValue.serverTimestamp(),
-                        "status": "active",
-                      });
+                 await FirebaseFirestore.instance
+    .collection("sos_alerts")
+    .add({
+      "uid": user?.uid,
+      "email": user?.email,
+
+      "latitude": position.latitude,
+      "longitude": position.longitude,
+
+      "city": currentCity,
+
+      "timestamp":
+          FieldValue.serverTimestamp(),
+
+      "status": "active",
+    });
 
                   final locationLink =
                       "https://maps.google.com/?q=${position.latitude},${position.longitude}";
@@ -263,15 +393,17 @@ class _HomeScreenState extends State<HomeScreen>
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           "Current Location",
                           style: TextStyle(color: Colors.grey, fontSize: 13),
                         ),
-                        SizedBox(height: 4),
+
+                        const SizedBox(height: 4),
+
                         Text(
-                          "Jaipur, Rajasthan",
-                          style: TextStyle(
+                          currentCity,
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),

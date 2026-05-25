@@ -67,97 +67,171 @@ StreamSubscription<Position>?
     });
   }
 
-  Future<void> sendSOSAlert() async {
-    await FirebaseFirestore.instance.collection('sos_alerts').add({
-      'uid': currentUser!.uid,
+Future<void> sendSOSAlert() async {
 
-      'email': currentUser!.email,
+  final existingAlert =
+      await FirebaseFirestore
+          .instance
+          .collection('sos_alerts')
+          .where(
+            'uid',
+            isEqualTo:
+                currentUser!.uid,
+          )
+          .where(
+            'status',
+            isEqualTo:
+                'active',
+          )
+          .limit(1)
+          .get();
 
-      'status': 'active',
-
-      'timestamp': Timestamp.now(),
-    });
-    locationStream =
-    Geolocator.getPositionStream(
-      locationSettings:
-          const LocationSettings(
-        accuracy:
-            LocationAccuracy.high,
-
-        distanceFilter: 5,
-      ),
-    ).listen(
-
-  (Position position) async {
-
-    final snapshot =
-        await FirebaseFirestore
-            .instance
-            .collection(
-                'sos_alerts')
-            .where(
-              'uid',
-              isEqualTo:
-                  currentUser!.uid,
-            )
-            .where(
-              'status',
-              isEqualTo:
-                  'active',
-            )
-            .limit(1)
-            .get();
-
-    if (snapshot.docs.isNotEmpty) {
-
-      await snapshot
-          .docs
-          .first
-          .reference
-          .update({
-
-        'latitude':
-            position.latitude,
-
-        'longitude':
-            position.longitude,
-      });
-    }
-  },
-);
+  if (existingAlert.docs.isNotEmpty) {
 
     if (!mounted) return;
 
-    showDialog(
-      context: context,
+    setState(() {
+      sosActivated = false;
+      countdown = 5;
+    });
 
-      builder: (_) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
 
-          title: const Text("SOS Alert Sent"),
-
-          content: const Text(
-            "Your emergency alert has been activated successfully.",
-          ),
-
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-
-                Navigator.pop(context);
-              },
-
-              child: const Text("OK"),
-            ),
-          ],
-        );
-      },
+      const SnackBar(
+        content: Text(
+          "SOS already active",
+        ),
+      ),
     );
+
+    return;
   }
+
+  await FirebaseFirestore
+      .instance
+      .collection(
+          'sos_alerts')
+      .add({
+
+    'uid':
+        currentUser!.uid,
+
+    'email':
+        currentUser!.email,
+
+    'status':
+        'active',
+
+    'timestamp':
+        Timestamp.now(),
+  });
+
+  locationStream =
+      Geolocator
+          .getPositionStream(
+    locationSettings:
+        const LocationSettings(
+      accuracy:
+          LocationAccuracy.high,
+
+      distanceFilter:
+          5,
+    ),
+  ).listen(
+
+    (
+      Position position,
+    ) async {
+
+      final snapshot =
+          await FirebaseFirestore
+              .instance
+              .collection(
+                  'sos_alerts')
+              .where(
+                'uid',
+                isEqualTo:
+                    currentUser!.uid,
+              )
+              .where(
+                'status',
+                isEqualTo:
+                    'active',
+              )
+              .limit(1)
+              .get();
+
+      if (snapshot.docs.isNotEmpty) {
+
+        await snapshot
+            .docs
+            .first
+            .reference
+            .update({
+
+          'latitude':
+              position.latitude,
+
+          'longitude':
+              position.longitude,
+        });
+      }
+    },
+  );
+
+  if (!mounted) return;
+
+  showDialog(
+    context: context,
+
+    builder: (_) {
+
+      return AlertDialog(
+
+        shape:
+            RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.circular(
+                  24),
+        ),
+
+        title:
+            const Text(
+          "SOS Alert Sent",
+        ),
+
+        content:
+            const Text(
+          "Your emergency alert has been activated successfully.",
+        ),
+
+        actions: [
+
+          TextButton(
+
+            onPressed: () {
+
+              Navigator.pop(
+                context,
+              );
+
+              Navigator.pop(
+                context,
+              );
+            },
+
+            child:
+                const Text(
+              "OK",
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Future<void> cancelSOS() async {
     timer?.cancel();
@@ -169,9 +243,17 @@ StreamSubscription<Position>?
         .limit(1)
         .get();
 
-    if (snapshot.docs.isNotEmpty) {
-      await snapshot.docs.first.reference.update({'status': 'resolved'});
-    }
+   if (snapshot.docs.isNotEmpty) {
+
+  await snapshot.docs.first.reference.update({
+
+    'status': 'resolved',
+
+    'resolvedAt':
+        FieldValue.serverTimestamp(),
+
+  });
+}
 
     setState(() {
       sosActivated = false;
