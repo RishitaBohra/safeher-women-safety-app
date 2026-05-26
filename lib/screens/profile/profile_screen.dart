@@ -28,6 +28,8 @@ final TextEditingController phoneController =
 
   String name = "";
   String email = "";
+  int totalContacts = 0;
+int totalAlerts = 0;
 
   @override
   void initState() {
@@ -42,6 +44,24 @@ final TextEditingController phoneController =
 
       final user =
           FirebaseAuth.instance.currentUser;
+
+          final contactsSnapshot =
+    await FirebaseFirestore
+        .instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('contacts')
+        .get();
+
+final alertsSnapshot =
+    await FirebaseFirestore
+        .instance
+        .collection('sos_alerts')
+        .where(
+          'uid',
+          isEqualTo: user.uid,
+        )
+        .get();
 
       if (user != null) {
 
@@ -58,7 +78,15 @@ final TextEditingController phoneController =
   name = doc['name'] ?? '';
   email = doc['email'] ?? '';
 
-  nameController.text = name;
+  totalContacts =
+      contactsSnapshot.docs.length;
+
+  totalAlerts =
+      alertsSnapshot.docs.length;
+
+  nameController.text =
+      name;
+
   phoneController.text =
       doc['phone'] ?? '';
 
@@ -401,15 +429,15 @@ final TextEditingController phoneController =
 
                         children: [
 
-                          profileStat(
-                            "4",
-                            "Contacts",
-                          ),
+                         profileStat(
+  totalContacts.toString(),
+  "Contacts",
+),
 
-                          profileStat(
-                            "12",
-                            "Alerts",
-                          ),
+profileStat(
+  totalAlerts.toString(),
+  "Alerts",
+),
 
                           profileStat(
                             "24/7",

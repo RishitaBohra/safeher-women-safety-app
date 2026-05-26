@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SOSHistoryScreen extends StatelessWidget {
   const SOSHistoryScreen({super.key});
@@ -16,11 +17,9 @@ class SOSHistoryScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-
         iconTheme: const IconThemeData(
           color: Colors.black,
         ),
-
         title: const Text(
           "SOS Alert History",
           style: TextStyle(
@@ -28,7 +27,6 @@ class SOSHistoryScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-
         centerTitle: true,
       ),
 
@@ -49,7 +47,6 @@ class SOSHistoryScreen extends StatelessWidget {
 
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
-
             return const Center(
               child: CircularProgressIndicator(),
             );
@@ -62,18 +59,15 @@ class SOSHistoryScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment:
                     MainAxisAlignment.center,
-
                 children: [
 
                   Container(
                     height: 100,
                     width: 100,
-
                     decoration: BoxDecoration(
                       color: Colors.pink.shade50,
                       shape: BoxShape.circle,
                     ),
-
                     child: const Icon(
                       Icons.history,
                       size: 50,
@@ -146,238 +140,272 @@ class SOSHistoryScreen extends StatelessWidget {
               final status =
                   data['status'];
 
-              String city = "Unknown Location";
+              String city =
+                  "Unknown Location";
 
-if (data.data().containsKey('city') &&
-    data['city'] != null &&
-    data['city'].toString().isNotEmpty) {
+              if (data.data().containsKey(
+                      'city') &&
+                  data['city'] !=
+                      null &&
+                  data['city']
+                      .toString()
+                      .isNotEmpty) {
 
-  city = data['city'];
+                city =
+                    data['city'];
 
-} else if (
-    data.data().containsKey('latitude') &&
-    data.data().containsKey('longitude')) {
+              } else if (
+                  data.data().containsKey(
+                      'latitude') &&
+                  data.data().containsKey(
+                      'longitude')) {
 
-  city =
-      "${data['latitude'].toStringAsFixed(2)}, "
-      "${data['longitude'].toStringAsFixed(2)}";
-}
+                city =
+                    "${data['latitude'].toStringAsFixed(2)}, "
+                    "${data['longitude'].toStringAsFixed(2)}";
+              }
 
               final bool active =
                   status == "active";
 
-              return Container(
-                margin:
-                    const EdgeInsets.only(
-                  bottom: 16,
-                ),
+              return GestureDetector(
+                onTap: () async {
 
-                padding:
-                    const EdgeInsets.all(
-                  18,
-                ),
+                  if (data.data()
+                          .containsKey(
+                              'latitude') &&
+                      data.data()
+                          .containsKey(
+                              'longitude')) {
 
-                decoration:
-                    BoxDecoration(
-                  color: Colors.white,
+                    final lat =
+                        data[
+                            'latitude'];
 
-                  borderRadius:
-                      BorderRadius.circular(
-                          24),
+                    final lng =
+                        data[
+                            'longitude'];
 
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black
-                          .withOpacity(
-                              0.04),
+                    final Uri mapUri =
+                        Uri.parse(
+                      "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+                    );
 
-                      blurRadius: 10,
+                    await launchUrl(
+                      mapUri,
+                    );
+                  }
+                },
 
-                      offset:
-                          const Offset(
-                        0,
-                        4,
+                child: Container(
+                  margin:
+                      const EdgeInsets.only(
+                    bottom: 16,
+                  ),
+
+                  padding:
+                      const EdgeInsets.all(
+                    18,
+                  ),
+
+                  decoration:
+                      BoxDecoration(
+                    color: Colors.white,
+
+                    borderRadius:
+                        BorderRadius.circular(
+                            24),
+
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black
+                            .withOpacity(
+                                0.04),
+
+                        blurRadius: 10,
+
+                        offset:
+                            const Offset(
+                          0,
+                          4,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
 
-                child: Row(
-                  children: [
+                  child: Row(
+                    children: [
 
-                    Container(
-                      height: 60,
-                      width: 60,
+                      Container(
+                        height: 60,
+                        width: 60,
 
-                      decoration:
-                          BoxDecoration(
-                        color: active
-                            ? Colors.red
-                                .shade50
-                            : Colors
-                                .grey
-                                .shade200,
+                        decoration:
+                            BoxDecoration(
+                          color: active
+                              ? Colors.red
+                                  .shade50
+                              : Colors.grey
+                                  .shade200,
 
-                        shape:
-                            BoxShape.circle,
+                          shape:
+                              BoxShape.circle,
+                        ),
+
+                        child: Icon(
+                          Icons.warning,
+
+                          color: active
+                              ? Colors.red
+                              : Colors.grey,
+
+                          size: 30,
+                        ),
                       ),
 
-                      child: Icon(
-                        Icons.warning,
-
-                        color: active
-                            ? Colors.red
-                            : Colors.grey,
-
-                        size: 30,
+                      const SizedBox(
+                        width: 16,
                       ),
-                    ),
 
-                    const SizedBox(
-                      width: 16,
-                    ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
 
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment
-                                .start,
+                          children: [
 
-                        children: [
+                            Row(
+                              children: [
 
-                          Row(
-                            children: [
-
-                              const Text(
-                                "SOS Alert",
-
-                                style:
-                                    TextStyle(
-                                  fontWeight:
-                                      FontWeight
-                                          .bold,
-
-                                  fontSize:
-                                      17,
-                                ),
-                              ),
-
-                              const Spacer(),
-
-                              Container(
-                                padding:
-                                    const EdgeInsets
-                                        .symmetric(
-                                  horizontal:
-                                      12,
-                                  vertical:
-                                      5,
-                                ),
-
-                                decoration:
-                                    BoxDecoration(
-                                  color: active
-                                      ? Colors
-                                          .red
-                                          .shade50
-                                      : Colors
-                                          .green
-                                          .shade50,
-
-                                  borderRadius:
-                                      BorderRadius
-                                          .circular(
-                                              20),
-                                ),
-
-                                child: Text(
-                                  active
-                                      ? "Active"
-                                      : "Resolved",
-
+                                const Text(
+                                  "SOS Alert",
                                   style:
                                       TextStyle(
-                                    color: active
-                                        ? Colors
-                                            .red
-                                        : Colors
-                                            .green,
-
                                     fontWeight:
-                                        FontWeight
-                                            .bold,
+                                        FontWeight.bold,
+                                    fontSize:
+                                        17,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
 
-                          const SizedBox(
-                            height: 8,
-                          ),
+                                const Spacer(),
 
-                          Row(
-                            children: [
+                                Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(
+                                    horizontal:
+                                        12,
+                                    vertical:
+                                        5,
+                                  ),
 
-                              const Icon(
-                                Icons.location_on,
-                                color: Color(
-                                  0xFFFF6A88,
-                                ),
-                                size: 18,
-                              ),
+                                  decoration:
+                                      BoxDecoration(
+                                    color: active
+                                        ? Colors.red.shade50
+                                        : Colors.green.shade50,
 
-                              const SizedBox(
-                                  width: 4),
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                            20),
+                                  ),
 
-                              Expanded(
-                                child: Text(
-                                  city,
-                                  style:
-                                      TextStyle(
-                                    color: Colors
-                                        .grey
-                                        .shade700,
+                                  child: Text(
+                                    active
+                                        ? "Active"
+                                        : "Resolved",
+
+                                    style:
+                                        TextStyle(
+                                      color: active
+                                          ? Colors.red
+                                          : Colors.green,
+
+                                      fontWeight:
+                                          FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
 
-                          const SizedBox(
-                            height: 6,
-                          ),
+                            const SizedBox(
+                              height: 8,
+                            ),
 
-                          Row(
-                            children: [
+                            Row(
+                              children: [
 
-                              const Icon(
-                                Icons.access_time,
-                                size: 18,
-                                color:
-                                    Colors.grey,
-                              ),
+                                const Icon(
+                                  Icons.location_on,
+                                  color: Color(
+                                    0xFFFF6A88,
+                                  ),
+                                  size: 18,
+                                ),
 
-                              const SizedBox(
-                                  width: 4),
+                                const SizedBox(
+                                    width: 4),
 
-                              Expanded(
-                                child: Text(
-                                  formattedDate,
-
-                                  style:
-                                      const TextStyle(
-                                    color: Colors
-                                        .grey,
+                                Expanded(
+                                  child: Text(
+                                    city,
+                                    style:
+                                        TextStyle(
+                                      color: Colors.grey.shade700,
+                                    ),
                                   ),
                                 ),
+                              ],
+                            ),
+
+                            const SizedBox(
+                              height: 6,
+                            ),
+
+                            Row(
+                              children: [
+
+                                const Icon(
+                                  Icons.access_time,
+                                  size: 18,
+                                  color:
+                                      Colors.grey,
+                                ),
+
+                                const SizedBox(
+                                    width: 4),
+
+                                Expanded(
+                                  child: Text(
+                                    formattedDate,
+                                    style:
+                                        const TextStyle(
+                                      color:
+                                          Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(
+                              height: 8,
+                            ),
+
+                            const Text(
+                              "Tap to open location",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFFFF6A88),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },

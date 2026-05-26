@@ -21,6 +21,31 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   final currentUser = FirebaseAuth.instance.currentUser;
 
   Future<void> addContact() async {
+
+  final existingContacts =
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.uid)
+          .collection('contacts')
+          .get();
+
+  if (existingContacts.docs.length >= 5) {
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
+
+      const SnackBar(
+        content: Text(
+          "Maximum 5 emergency contacts allowed",
+        ),
+      ),
+    );
+
+    return;
+  }
     if (nameController.text.isEmpty ||
         phoneController.text.isEmpty ||
         relationController.text.isEmpty) {

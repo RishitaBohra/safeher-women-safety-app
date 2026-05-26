@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/Users/rishitabohra/Documents/safeher/linux"
+    "cmake.sourceDirectory": "/Users/rishitabohra/Documents/safeher/linux",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

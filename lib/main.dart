@@ -7,6 +7,7 @@ import 'firebase_options.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/auth/splash_screen.dart';
+import 'services/notification_service.dart';
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +17,9 @@ void main() async {
         DefaultFirebaseOptions
             .currentPlatform,
   );
+  WidgetsFlutterBinding.ensureInitialized();
+
+await NotificationService.init();
 
   runApp(
     const SafeHerApp(),

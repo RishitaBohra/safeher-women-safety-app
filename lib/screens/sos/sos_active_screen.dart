@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:safeher/services/notification_service.dart';
 
 class SosActiveScreen extends StatefulWidget {
   const SosActiveScreen({super.key});
@@ -68,6 +69,9 @@ StreamSubscription<Position>?
   }
 
 Future<void> sendSOSAlert() async {
+  await NotificationService
+      .showSOSNotification();
+
 
   final existingAlert =
       await FirebaseFirestore
@@ -127,6 +131,8 @@ Future<void> sendSOSAlert() async {
     'timestamp':
         Timestamp.now(),
   });
+  await NotificationService
+    .showSOSNotification();
 
   locationStream =
       Geolocator
@@ -254,6 +260,8 @@ Future<void> sendSOSAlert() async {
 
   });
 }
+await NotificationService
+    .cancelNotification();
 
     setState(() {
       sosActivated = false;
