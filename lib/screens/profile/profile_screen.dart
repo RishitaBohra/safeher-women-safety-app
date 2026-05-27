@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/login_screen.dart';
+import '../emergency/emergency_places_screen.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfileScreen extends StatefulWidget {
     const ProfileScreen({super.key});
@@ -30,6 +34,10 @@ final TextEditingController phoneController =
   String email = "";
   int totalContacts = 0;
 int totalAlerts = 0;
+String profileImageUrl = "";
+
+final ImagePicker picker =
+    ImagePicker();
 
   @override
   void initState() {
@@ -90,6 +98,9 @@ final alertsSnapshot =
   phoneController.text =
       doc['phone'] ?? '';
 
+  profileImageUrl =
+    doc['profileImage'] ?? '';
+
   isLoading = false;
 });
         } else {
@@ -114,6 +125,97 @@ final alertsSnapshot =
       });
     }
   }
+
+
+Future<void> pickAndUploadImage() async {
+
+  try {
+
+    final XFile? image =
+        await ImagePicker()
+            .pickImage(
+      source:
+          ImageSource.gallery,
+    );
+
+    if (image == null) return;
+
+    if (!mounted) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
+    final user =
+        FirebaseAuth
+            .instance
+            .currentUser;
+
+    if (user == null) return;
+
+   File file =
+    File(image.path);
+
+final storageRef =
+    FirebaseStorage.instance
+        .ref()
+        .child(
+          'profile_images/${user.uid}.jpg',
+        );
+
+final uploadTask =
+    storageRef.putFile(
+      file,
+    );
+
+await uploadTask;
+
+final imageUrl =
+    await storageRef
+        .getDownloadURL();
+    await FirebaseFirestore
+    .instance
+    .collection('users')
+    .doc(user.uid)
+    .set({
+
+      'profileImage':
+          imageUrl,
+
+    }, SetOptions(
+      merge: true,
+));
+    setState(() {
+
+      profileImageUrl =
+          imageUrl;
+
+      isLoading =
+          false;
+    });
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
+
+      const SnackBar(
+        content: Text(
+          "Profile updated",
+        ),
+      ),
+    );
+
+  } catch (e) {
+
+    setState(() {
+      isLoading = false;
+    });
+
+    print(
+      "Upload error: $e",
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -238,11 +340,32 @@ final alertsSnapshot =
                           ],
                         ),
 
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 60,
-                        ),
+                        child: GestureDetector(
+
+  onTap: () {
+
+    pickAndUploadImage();
+  },
+
+  child: ClipOval(
+
+    child:
+        profileImageUrl.isEmpty
+
+        ? const Icon(
+            Icons.person,
+            color: Colors.white,
+            size: 60,
+          )
+
+        : Image.network(
+            profileImageUrl,
+            fit: BoxFit.cover,
+            width: 85,
+            height: 85,
+          ),
+  ),
+),
                       ),
 
                       const SizedBox(height: 20),
@@ -534,6 +657,75 @@ profileStat(
                 ),
 
                 const SizedBox(height: 28),
+
+                const SizedBox(height: 18),
+
+Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius:
+        BorderRadius.circular(24),
+
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black
+            .withOpacity(0.04),
+        blurRadius: 10,
+      ),
+    ],
+  ),
+
+  child: ListTile(
+
+    leading: Container(
+      padding:
+          const EdgeInsets.all(10),
+
+      decoration: BoxDecoration(
+        color: Colors.red
+            .withOpacity(0.1),
+
+        shape:
+            BoxShape.circle,
+      ),
+
+      child: const Icon(
+        Icons.emergency,
+        color: Colors.red,
+      ),
+    ),
+
+    title: const Text(
+      "Emergency Help",
+      style: TextStyle(
+        fontWeight:
+            FontWeight.bold,
+      ),
+    ),
+
+    subtitle: const Text(
+      "Nearby hospitals & police",
+    ),
+
+    trailing: const Icon(
+      Icons.arrow_forward_ios,
+      size: 18,
+    ),
+
+    onTap: () {
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              const EmergencyPlacesScreen(),
+        ),
+      );
+    },
+  ),
+),
+
+SizedBox(height: 18),
 
                 // ================= LOGOUT =================
 

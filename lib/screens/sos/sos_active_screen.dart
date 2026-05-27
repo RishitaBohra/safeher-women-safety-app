@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:safeher/services/notification_service.dart';
+import 'package:geolocator_android/geolocator_android.dart';
 
 class SosActiveScreen extends StatefulWidget {
   const SosActiveScreen({super.key});
@@ -135,17 +136,28 @@ Future<void> sendSOSAlert() async {
     .showSOSNotification();
 
   locationStream =
-      Geolocator
-          .getPositionStream(
-    locationSettings:
-        const LocationSettings(
-      accuracy:
-          LocationAccuracy.high,
+Geolocator.getPositionStream(
+  locationSettings:
+    AndroidSettings(
 
-      distanceFilter:
-          5,
-    ),
-  ).listen(
+  accuracy:
+      LocationAccuracy.high,
+
+  distanceFilter: 5,
+
+  foregroundNotificationConfig:
+      const ForegroundNotificationConfig(
+
+    notificationTitle:
+        "SafeHer SOS Active",
+
+    notificationText:
+        "Location tracking is running",
+
+    enableWakeLock: true,
+  ),
+),
+).listen(
 
     (
       Position position,
