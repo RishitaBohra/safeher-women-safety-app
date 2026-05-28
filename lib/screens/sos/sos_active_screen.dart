@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:safeher/services/notification_service.dart';
 import 'package:geolocator_android/geolocator_android.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SosActiveScreen extends StatefulWidget {
   const SosActiveScreen({super.key});
@@ -68,6 +69,57 @@ StreamSubscription<Position>?
       });
     });
   }
+
+  Future<void> sendEmergencySMS(
+  double latitude,
+  double longitude,
+) async {
+
+  try {
+
+    final contactsSnapshot =
+        await FirebaseFirestore
+            .instance
+            .collection('users')
+            .doc(currentUser!.uid)
+            .collection('contacts')
+            .get();
+
+    if (contactsSnapshot.docs.isEmpty) {
+      return;
+    }
+
+    final phones =
+        contactsSnapshot.docs
+            .map(
+              (doc) =>
+                  doc['phone']
+                      .toString(),
+            )
+            .join(',');
+
+    final message =
+        "🚨 SOS Alert!\n"
+        "I may be in danger.\n"
+        "Live Location:\n"
+        "https://maps.google.com/?q=$latitude,$longitude";
+
+    final Uri smsUri =
+        Uri.parse(
+      "sms:$phones?body=${Uri.encodeComponent(message)}",
+    );
+
+    await launchUrl(
+      smsUri,
+    );
+
+  } catch (e) {
+
+    print(
+      "SMS Error: $e",
+    );
+  }
+}
 
 Future<void> sendSOSAlert() async {
   await NotificationService
@@ -184,17 +236,22 @@ Geolocator.getPositionStream(
       if (snapshot.docs.isNotEmpty) {
 
         await snapshot
-            .docs
-            .first
-            .reference
-            .update({
+    .docs
+    .first
+    .reference
+    .update({
 
-          'latitude':
-              position.latitude,
+  'latitude':
+      position.latitude,
 
-          'longitude':
-              position.longitude,
-        });
+  'longitude':
+      position.longitude,
+});
+
+await sendEmergencySMS(
+  position.latitude,
+  position.longitude,
+);
       }
     },
   );
