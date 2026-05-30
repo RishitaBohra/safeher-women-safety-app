@@ -142,6 +142,9 @@ Future<void> sendSOSAlert() async {
           )
           .limit(1)
           .get();
+     print(
+  "ACTIVE SOS COUNT = ${existingAlert.docs.length}",
+);     
 
   if (existingAlert.docs.isNotEmpty) {
 
@@ -318,15 +321,10 @@ await sendEmergencySMS(
         .limit(1)
         .get();
 
-   if (snapshot.docs.isNotEmpty) {
-
-  await snapshot.docs.first.reference.update({
-
+   for (final doc in snapshot.docs) {
+  await doc.reference.update({
     'status': 'resolved',
-
-    'resolvedAt':
-        FieldValue.serverTimestamp(),
-
+    'resolvedAt': FieldValue.serverTimestamp(),
   });
 }
 await NotificationService

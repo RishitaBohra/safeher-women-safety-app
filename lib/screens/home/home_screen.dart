@@ -276,23 +276,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                   final user = FirebaseAuth.instance.currentUser;
 
-                 await FirebaseFirestore.instance
-    .collection("sos_alerts")
-    .add({
-      "uid": user?.uid,
-      "email": user?.email,
-
-      "latitude": position.latitude,
-      "longitude": position.longitude,
-
-      "city": currentCity,
-
-      "timestamp":
-          FieldValue.serverTimestamp(),
-
-      "status": "active",
-    });
-
+                
                   final locationLink =
                       "https://maps.google.com/?q=${position.latitude},${position.longitude}";
 
