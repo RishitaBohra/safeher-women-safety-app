@@ -169,24 +169,36 @@ Future<void> sendSOSAlert() async {
     return;
   }
 
-  await FirebaseFirestore
-      .instance
-      .collection(
-          'sos_alerts')
-      .add({
+  final Position currentPosition =
+    await Geolocator.getCurrentPosition(
+  desiredAccuracy:
+      LocationAccuracy.high,
+);
 
-    'uid':
-        currentUser!.uid,
+final docRef =
+    await FirebaseFirestore
+        .instance
+        .collection('sos_alerts')
+        .add({
 
-    'email':
-        currentUser!.email,
+  'uid':
+      currentUser!.uid,
 
-    'status':
-        'active',
+  'email':
+      currentUser!.email,
 
-    'timestamp':
-        Timestamp.now(),
-  });
+  'status':
+      'active',
+
+  'timestamp':
+      Timestamp.now(),
+
+  'latitude':
+      currentPosition.latitude,
+
+  'longitude':
+      currentPosition.longitude,
+});
   await NotificationService
     .showSOSNotification();
 
@@ -217,6 +229,11 @@ Geolocator.getPositionStream(
     (
       Position position,
     ) async {
+      print(
+  "LOCATION RECEIVED: "
+  "${position.latitude}, "
+  "${position.longitude}",
+);
 
       final snapshot =
           await FirebaseFirestore
@@ -235,8 +252,12 @@ Geolocator.getPositionStream(
               )
               .limit(1)
               .get();
+              print(
+  "ACTIVE DOCS FOUND = ${snapshot.docs.length}",
+);
 
       if (snapshot.docs.isNotEmpty) {
+        print("UPDATING FIRESTORE...");
 
         await snapshot
     .docs
@@ -250,7 +271,7 @@ Geolocator.getPositionStream(
   'longitude':
       position.longitude,
 });
-
+print("FIRESTORE UPDATED");
 await sendEmergencySMS(
   position.latitude,
   position.longitude,
@@ -260,55 +281,103 @@ await sendEmergencySMS(
   );
 
   if (!mounted) return;
+showDialog(
+  context: context,
+  builder: (_) {
+    return AlertDialog(
+      title: const Text(
+        "SOS Alert Sent",
+      ),
 
-  showDialog(
-    context: context,
+      content: const Text(
+        "Emergency alert is ready.",
+      ),
 
-    builder: (_) {
+      actions: [
 
-      return AlertDialog(
-
-        shape:
-            RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(
-                  24),
-        ),
-
-        title:
-            const Text(
-          "SOS Alert Sent",
-        ),
-
-        content:
-            const Text(
-          "Your emergency alert has been activated successfully.",
-        ),
-
-        actions: [
-
-          TextButton(
-
-            onPressed: () {
-
-              Navigator.pop(
-                context,
-              );
-
-              Navigator.pop(
-                context,
-              );
-            },
-
-            child:
-                const Text(
-              "OK",
-            ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text(
+            "Cancel",
           ),
-        ],
-      );
-    },
-  );
+        ),
+
+        ElevatedButton(
+          onPressed: () async {
+
+            final contactsSnapshot =
+                await FirebaseFirestore
+                    .instance
+                    .collection('users')
+                    .doc(currentUser!.uid)
+                    .collection('contacts')
+                    .get();
+
+            final phoneNumbers =
+                contactsSnapshot.docs
+                    .map(
+                      (doc) => doc['phone']
+                          .toString(),
+                    )
+                    .toList();
+
+            final activeDoc =
+                await FirebaseFirestore
+                    .instance
+                    .collection('sos_alerts')
+                    .where(
+                      'uid',
+                      isEqualTo:
+                          currentUser!.uid,
+                    )
+                    .where(
+                      'status',
+                      isEqualTo:
+                          'active',
+                    )
+                    .limit(1)
+                    .get();
+
+            String locationLink =
+                "Location unavailable";
+
+            if (activeDoc.docs.isNotEmpty) {
+
+              final data =
+                  activeDoc.docs.first.data();
+
+              locationLink =
+                  "https://maps.google.com/?q=${data['latitude']},${data['longitude']}";
+            }
+
+            final Uri smsUri = Uri(
+              scheme: 'sms',
+              path: phoneNumbers.join(','),
+              queryParameters: {
+                'body':
+                    "🚨 SOS Alert!\n"
+                    "I need help.\n"
+                    "My location:\n"
+                    "$locationLink",
+              },
+            );
+
+            Navigator.pop(context);
+
+            await launchUrl(
+              smsUri,
+            );
+          },
+          child: const Text(
+            "Send Alert",
+          ),
+        ),
+      ],
+    );
+  },
+);
 }
 
   Future<void> cancelSOS() async {

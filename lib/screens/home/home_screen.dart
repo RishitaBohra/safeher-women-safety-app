@@ -296,43 +296,7 @@ class _HomeScreenState extends State<HomeScreen>
                     isLoading = false;
                   });
 
-                  showDialog(
-                    context: context,
-                    builder: (_) {
-                      return AlertDialog(
-                        title: const Text("SOS Activated"),
-                        content: const Text("Emergency alert is ready."),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text("Cancel"),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              final Uri smsUri = Uri(
-                                scheme: 'sms',
-                                path: phoneNumbers.join(','),
-                                queryParameters: {
-                                  'body':
-                                      "🚨 SOS Alert!\n"
-                                      "I need help.\n"
-                                      "My location:\n"
-                                      "$locationLink",
-                                },
-                              );
-
-                              Navigator.pop(context);
-
-                              await launchUrl(smsUri);
-                            },
-                            child: const Text("Send Alert"),
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                 
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Live Location Ready")),
