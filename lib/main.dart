@@ -8,18 +8,15 @@ import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/auth/splash_screen.dart';
 import 'services/notification_service.dart';
-void main() async {
 
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
-    options:
-        DefaultFirebaseOptions
-            .currentPlatform,
+    options: DefaultFirebaseOptions.currentPlatform,
   );
-  WidgetsFlutterBinding.ensureInitialized();
 
-await NotificationService.init();
+  await NotificationService.init();
 
   runApp(
     const SafeHerApp(),
@@ -31,28 +28,21 @@ class SafeHerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
-      debugShowCheckedModeBanner:
-          false,
+      debugShowCheckedModeBanner: false,
 
       title: 'SafeHer',
 
       theme: ThemeData(
         fontFamily: 'Roboto',
-        scaffoldBackgroundColor:
-            const Color(0xFFF7F8FC),
+        scaffoldBackgroundColor: const Color(0xFFF7F8FC),
 
-        colorScheme:
-            ColorScheme.fromSeed(
-          seedColor:
-              const Color(
-            0xFFFF6A88,
-          ),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFFF6A88),
         ),
       ),
 
-     home: const SplashScreen(),
+      home: const SplashScreen(),
     );
   }
 }

@@ -190,7 +190,7 @@ class _SplashScreenState
         BorderRadius.circular(20),
 
     child: Image.asset(
-      "assets/images/homepageillustration.png",
+      "assets/images/logo.png",
       height: 90,
       width: 90,
       fit: BoxFit.cover,

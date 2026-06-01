@@ -3,9 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/login_screen.dart';
 import '../emergency/emergency_places_screen.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfileScreen extends StatefulWidget {
     const ProfileScreen({super.key});
@@ -36,8 +33,7 @@ final TextEditingController phoneController =
 int totalAlerts = 0;
 String profileImageUrl = "";
 
-final ImagePicker picker =
-    ImagePicker();
+
 
   @override
   void initState() {
@@ -127,95 +123,7 @@ final alertsSnapshot =
   }
 
 
-Future<void> pickAndUploadImage() async {
 
-  try {
-
-    final XFile? image =
-        await ImagePicker()
-            .pickImage(
-      source:
-          ImageSource.gallery,
-    );
-
-    if (image == null) return;
-
-    if (!mounted) return;
-
-    setState(() {
-      isLoading = true;
-    });
-
-    final user =
-        FirebaseAuth
-            .instance
-            .currentUser;
-
-    if (user == null) return;
-
-   File file =
-    File(image.path);
-
-final storageRef =
-    FirebaseStorage.instance
-        .ref()
-        .child(
-          'profile_images/${user.uid}.jpg',
-        );
-
-final uploadTask =
-    storageRef.putFile(
-      file,
-    );
-
-await uploadTask;
-
-final imageUrl =
-    await storageRef
-        .getDownloadURL();
-    await FirebaseFirestore
-    .instance
-    .collection('users')
-    .doc(user.uid)
-    .set({
-
-      'profileImage':
-          imageUrl,
-
-    }, SetOptions(
-      merge: true,
-));
-    setState(() {
-
-      profileImageUrl =
-          imageUrl;
-
-      isLoading =
-          false;
-    });
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(
-
-      const SnackBar(
-        content: Text(
-          "Profile updated",
-        ),
-      ),
-    );
-
-  } catch (e) {
-
-    setState(() {
-      isLoading = false;
-    });
-
-    print(
-      "Upload error: $e",
-    );
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -342,10 +250,6 @@ final imageUrl =
 
                         child: GestureDetector(
 
-  onTap: () {
-
-    pickAndUploadImage();
-  },
 
   child: ClipOval(
 
