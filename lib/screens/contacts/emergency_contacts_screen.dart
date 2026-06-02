@@ -498,7 +498,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 
                           const SizedBox(height: 12),
 
-                          Row(
+                         Wrap(
+  spacing: 12,
+  runSpacing: 8,
                             children: [
                               IconButton(
                                 padding: EdgeInsets.zero,
@@ -521,7 +523,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                 ),
                               ),
 
-                              const SizedBox(width: 18),
+                            
 
                               IconButton(
                                 padding: EdgeInsets.zero,
@@ -547,7 +549,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                 ),
                               ),
 
-                              const SizedBox(width: 18),
+                  
 
                               IconButton(
                                 padding: EdgeInsets.zero,
@@ -563,7 +565,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                 ),
                               ),
 
-                              const SizedBox(width: 18),
+                           
 
                               IconButton(
                                 padding: EdgeInsets.zero,
