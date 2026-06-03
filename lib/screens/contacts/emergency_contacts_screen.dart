@@ -498,9 +498,8 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
 
                           const SizedBox(height: 12),
 
-                         Wrap(
-  spacing: 12,
-  runSpacing: 8,
+                         Row(
+                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               IconButton(
                                 padding: EdgeInsets.zero,
