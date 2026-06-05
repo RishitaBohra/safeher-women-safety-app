@@ -27,18 +27,15 @@ class NotificationService {
 
   static Future<void> showSOSNotification() async {
 
-    const AndroidNotificationDetails
-        androidDetails =
-        AndroidNotificationDetails(
-      'sos_channel',
-      'SOS Alerts',
-
-      importance:
-          Importance.max,
-
-      priority:
-          Priority.high,
-    );
+   const AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails(
+  'sos_channel',
+  'SOS Alerts',
+  importance: Importance.max,
+  priority: Priority.high,
+  enableVibration: true,
+  playSound: true,
+);
 
     const NotificationDetails
         details =
