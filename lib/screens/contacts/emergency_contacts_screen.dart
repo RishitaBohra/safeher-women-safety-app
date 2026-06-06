@@ -335,11 +335,24 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
           },
         ),
 
-        title: const Text(
-          "Emergency Contacts",
+        title: StreamBuilder(
+  stream: FirebaseFirestore.instance
+      .collection('users')
+      .doc(currentUser!.uid)
+      .collection('contacts')
+      .snapshots(),
+  builder: (context, snapshot) {
+    final count = snapshot.data?.docs.length ?? 0;
 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+    return Text(
+      "Emergency Contacts ($count/5)",
+      style: const TextStyle(
+        color: Colors.black,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  },
+),
 
         centerTitle: true,
       ),
