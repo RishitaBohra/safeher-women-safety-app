@@ -74,6 +74,13 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     relationController.clear();
 
     Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+  const SnackBar(
+    content: Text(
+      "Emergency contact added successfully",
+    ),
+  ),
+);
   }
 
   Future<void> deleteContact(String docId) async {
