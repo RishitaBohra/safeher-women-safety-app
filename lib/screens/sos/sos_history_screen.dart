@@ -80,7 +80,7 @@ class SOSHistoryScreen extends StatelessWidget {
                   ),
 
                   const Text(
-                    "No SOS History",
+  "No SOS Alerts Yet",
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight:
@@ -93,7 +93,7 @@ class SOSHistoryScreen extends StatelessWidget {
                   ),
 
                   const Text(
-                    "Your emergency alerts will appear here",
+  "Activate SOS to start tracking emergency alerts",
                     style: TextStyle(
                       color: Colors.grey,
                     ),
