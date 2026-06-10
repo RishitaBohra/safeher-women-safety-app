@@ -21,7 +21,7 @@ class _SosActiveScreenState extends State<SosActiveScreen>
 
   bool sosActivated = false;
 
-  int countdown = 5;
+  int countdown = 3;
 
   Timer? timer;
 StreamSubscription<Position>?
@@ -152,7 +152,7 @@ Future<void> sendSOSAlert() async {
 
     setState(() {
       sosActivated = false;
-      countdown = 5;
+      countdown = 3;
     });
 
     ScaffoldMessenger.of(
@@ -401,7 +401,7 @@ await NotificationService
 
     setState(() {
       sosActivated = false;
-      countdown = 5;
+      countdown = 3;
     });
 
     if (!mounted) return;
