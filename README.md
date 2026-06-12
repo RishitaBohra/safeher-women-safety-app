@@ -70,7 +70,7 @@ lib/
 * Live Location Screen
 * Profile Screen
 
-## Firebase Features
+
 
 ### Authentication
 
